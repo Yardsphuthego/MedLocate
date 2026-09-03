@@ -129,6 +129,33 @@ class InventorySecurityTests(CoreFixture):
         self.assertEqual(InventoryItem.objects.filter(facility=self.facility, medicine=self.medicine).count(), 1)
 
 
+class DashboardTests(CoreFixture):
+    def test_patient_receives_patient_dashboard(self):
+        self.client.force_login(self.patient)
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Patient workspace")
+        self.assertContains(response, "Find medicine")
+
+    def test_inventory_dashboard_respects_facility_scope(self):
+        self.client.force_login(self.officer)
+        response = self.client.get(reverse("dashboard"))
+        self.assertContains(response, "Test Clinic")
+        self.assertNotContains(response, "Other Clinic")
+
+    def test_superuser_receives_platform_dashboard(self):
+        administrator = User.objects.create_superuser(
+            username="platform.admin", email="platform@example.test", password="strong-admin-password"
+        )
+        administrator.primary_role = User.Role.PLATFORM_ADMIN
+        administrator.save(update_fields=["primary_role"])
+        self.client.force_login(administrator)
+        response = self.client.get(reverse("dashboard"))
+        self.assertContains(response, "Platform command centre")
+        self.assertContains(response, "Test Clinic")
+        self.assertContains(response, "Other Clinic")
+
+
 class RegistrationTests(TestCase):
     def test_account_pages_open_home_overlays(self):
         self.assertRedirects(self.client.get(reverse("login")), "/#sign-in")

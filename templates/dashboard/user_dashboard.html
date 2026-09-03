@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{{ dashboard_role }} dashboard — MedLocate{% endblock %}
+{% block content %}
+<section class="workspace-banner">
+  <div class="wide-shell workspace-banner-inner">
+    <div><span class="workspace-eyebrow">{{ dashboard_role }} workspace</span><h1>Welcome, {{ user.first_name|default:user.username }}</h1><p>{{ dashboard_intro }}</p></div>
+    <div class="workspace-identity"><small>Signed in as</small><strong>{{ user.get_full_name|default:user.username }}</strong><span>{{ dashboard_role }}</span></div>
+  </div>
+</section>
+<section class="dashboard-metrics wide-shell" aria-label="Workspace summary">
+  {% for metric in metrics %}<article><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong><small>{{ metric.note }}</small></article>{% endfor %}
+</section>
+<section class="dashboard-body wide-shell">
+  <div class="dashboard-main-column">
+    <section class="dashboard-panel">
+      <header><div><span class="kicker">Latest activity</span><h2>{{ recent_heading }}</h2></div><span>{{ recent_rows|length }} shown</span></header>
+      <div class="dashboard-activity-list">
+        {% for row in recent_rows %}
+          {% if row.url %}<a href="{{ row.url }}">{% else %}<div>{% endif %}
+            <span class="activity-marker" aria-hidden="true"></span><div><strong>{{ row.title }}</strong><small>{{ row.meta }}</small></div><em class="status-chip {{ row.status_class }}">{{ row.status }}</em><b aria-hidden="true">{% if row.url %}›{% endif %}</b>
+          {% if row.url %}</a>{% else %}</div>{% endif %}
+        {% empty %}<div class="dashboard-empty"><strong>No activity yet</strong><span>Your latest role-authorized activity will appear here.</span></div>{% endfor %}
+      </div>
+    </section>
+    {% if recent_uploads %}<section class="dashboard-panel dashboard-upload-panel"><header><div><span class="kicker">Inventory imports</span><h2>Recent uploads</h2></div></header><div class="dashboard-activity-list">{% for upload in recent_uploads %}<a href="{% url 'inventory_upload_preview' upload.pk %}"><span class="activity-marker" aria-hidden="true"></span><div><strong>{{ upload.original_name }}</strong><small>{{ upload.facility.name }} · {{ upload.created_at|date:'d M Y, H:i' }}</small></div><em class="status-chip {{ upload.status }}">{{ upload.get_status_display }}</em><b aria-hidden="true">›</b></a>{% endfor %}</div></section>{% endif %}
+  </div>
+  <aside class="dashboard-sidebar">
+    <section class="dashboard-actions"><span class="kicker">Workspace actions</span><h2>What would you like to do?</h2><nav>{% for action in quick_actions %}<a href="{{ action.url }}"><span><strong>{{ action.label }}</strong><small>{{ action.detail }}</small></span><b aria-hidden="true">→</b></a>{% endfor %}</nav></section>
+    {% if facilities %}<section class="dashboard-facilities"><span class="kicker">Access scope</span><h2>Assigned facilities</h2>{% for facility in facilities %}<div><strong>{{ facility.name }}</strong><small>{{ facility.get_facility_type_display }} · {{ facility.address }}</small></div>{% endfor %}</section>{% endif %}
+  </aside>
+</section>
+{% endblock %}

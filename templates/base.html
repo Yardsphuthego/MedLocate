@@ -35,7 +35,7 @@
       </nav>
       <div class="clinic-actions">
         <a class="nav-search" href="{% url 'medicine_search' %}" aria-label="Search for medicine"><span aria-hidden="true">⌕</span></a>
-        {% if user.is_authenticated %}<span class="clinic-account"><strong>{{ user.first_name|default:user.username }}</strong><small>{{ user.get_primary_role_display }}</small></span><a class="clinic-cta" href="{% url 'dashboard' %}">My MedLocate</a>{% else %}<button class="clinic-signin" type="button" data-login-open aria-expanded="false" aria-controls="login-dropdown">Sign in <span aria-hidden="true">⌄</span></button><a class="clinic-cta" href="{% url 'register' %}" data-register-open>Create account</a>{% endif %}
+        {% if user.is_authenticated %}<span class="clinic-account"><strong>{{ user.first_name|default:user.username }}</strong><small>{% if user.is_superuser %}Platform administrator{% else %}{{ user.get_primary_role_display }}{% endif %}</small></span><a class="clinic-cta" href="{% url 'dashboard' %}">My MedLocate</a>{% else %}<button class="clinic-signin" type="button" data-login-open aria-expanded="false" aria-controls="login-dropdown">Sign in <span aria-hidden="true">⌄</span></button><a class="clinic-cta" href="{% url 'register' %}" data-register-open>Create account</a>{% endif %}
       </div>
       {% if not user.is_authenticated %}
       <section class="login-dropdown" id="login-dropdown" data-login-panel hidden aria-labelledby="login-dropdown-title">

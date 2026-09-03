@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Platform administration — MedLocate{% endblock %}
+{% block content %}
+<section class="workspace-banner admin-workspace-banner">
+  <div class="wide-shell workspace-banner-inner">
+    <div><span class="workspace-eyebrow">Super administrator</span><h1>{{ workspace_name }}</h1><p>{{ dashboard_intro }}</p></div>
+    <a class="workspace-admin-link" href="{% url 'admin:index' %}">Open Django administration <span>→</span></a>
+  </div>
+</section>
+<section class="dashboard-metrics wide-shell" aria-label="Platform summary">
+  {% for metric in metrics %}<article><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong><small>{{ metric.note }}</small></article>{% endfor %}
+</section>
+<section class="admin-dashboard-body wide-shell">
+  <div class="admin-dashboard-main">
+    <section class="dashboard-panel">
+      <header><div><span class="kicker">Network operations</span><h2>Facility overview</h2></div><a href="{% url 'admin:facilities_facility_changelist' %}">Manage facilities</a></header>
+      <div class="table-wrap"><table class="dashboard-table"><thead><tr><th>Facility</th><th>Status</th><th>Staff</th><th>Stock records</th><th>Total units</th></tr></thead><tbody>{% for facility in facility_rows %}<tr><td><strong>{{ facility.name }}</strong><small>{{ facility.get_facility_type_display }} · {{ facility.address }}</small></td><td><span class="status-chip {{ facility.status }}">{{ facility.get_status_display }}</span></td><td>{{ facility.staff_count }}</td><td>{{ facility.stock_records }}</td><td>{{ facility.total_units|default:0 }}</td></tr>{% empty %}<tr><td colspan="5">No facilities have been added.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+    <section class="dashboard-panel">
+      <header><div><span class="kicker">Traceability</span><h2>Recent audit events</h2></div><a href="{% url 'admin:audit_auditevent_changelist' %}">View audit evidence</a></header>
+      <div class="admin-audit-list">{% for event in recent_audit %}<div><span class="activity-marker" aria-hidden="true"></span><div><strong>{{ event.action }}</strong><small>{{ event.object_type }} {{ event.object_id }}{% if event.facility %} · {{ event.facility.name }}{% endif %}</small></div><span>{{ event.actor|default:'System' }}</span><time>{{ event.timestamp|date:'d M, H:i' }}</time></div>{% empty %}<div class="dashboard-empty"><strong>No audit activity yet</strong><span>Protected workflow events will appear here.</span></div>{% endfor %}</div>
+    </section>
+  </div>
+  <aside class="admin-dashboard-sidebar">
+    <section class="platform-health-panel"><span class="kicker">Attention required</span><h2>Inventory health</h2><div class="health-stat"><strong>{{ inventory_health.low }}</strong><span>Low-stock records</span></div><div class="health-stat"><strong>{{ inventory_health.stale }}</strong><span>Stale updates</span></div><div class="health-stat"><strong>{{ inventory_health.expired }}</strong><span>Expired batches</span></div><div class="health-stat"><strong>{{ inventory_health.zero }}</strong><span>Zero-stock records</span></div></section>
+    <section class="dashboard-actions admin-actions"><span class="kicker">Administration</span><h2>Platform controls</h2><nav>{% for action in quick_actions %}<a href="{{ action.url }}"><span><strong>{{ action.label }}</strong><small>{{ action.detail }}</small></span><b aria-hidden="true">→</b></a>{% endfor %}</nav></section>
+    <section class="role-distribution"><span class="kicker">Access</span><h2>Users by role</h2>{% for role in role_counts %}<div><span>{{ role.label }}</span><strong>{{ role.count }}</strong></div>{% endfor %}</section>
+    <section class="recent-users"><span class="kicker">Latest accounts</span><h2>Recently registered</h2>{% for account in recent_users %}<div><span>{{ account.get_full_name|default:account.username }}</span><small>{% if account.is_superuser %}Platform administrator{% else %}{{ account.get_primary_role_display }}{% endif %}</small></div>{% empty %}<p>No accounts yet.</p>{% endfor %}</section>
+  </aside>
+</section>
+{% endblock %}

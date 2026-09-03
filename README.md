@@ -6,6 +6,7 @@ The current vertical slice implements:
 
 - Custom users with patient, doctor, dispenser, inventory, facility administrator and platform administrator roles.
 - Patient self-registration and secure Django session authentication.
+- Role-aware user dashboards and a platform super-administrator command centre.
 - Facility membership boundaries for staff.
 - Facility and medicine master data.
 - Audited facility inventory maintenance with freshness and low-stock indicators.
