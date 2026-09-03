@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">MedLocate</title>
+  <rect width="64" height="64" rx="12" fill="#ffffff"/>
+  <path d="M12 46V17h7.2L32 37.5 44.8 17H52v29h-7V28.7L34.8 45h-5.6L19 28.7V46z" fill="#171717"/>
+  <rect x="12" y="51" width="40" height="3" rx="1.5" fill="#58bfe7"/>
+</svg>

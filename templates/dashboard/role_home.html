@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}My workspace — MedLocate{% endblock %}
+{% block content %}<section class="page shell"><header class="page-heading"><div><span class="kicker">{{ user.get_primary_role_display }} workspace</span><h1>Welcome, {{ user.first_name|default:user.username }}</h1><p>Your role-specific clinical workflow is scheduled for the next implementation phase.</p></div></header><div class="surface empty-state"><span>→</span><h2>The secure foundation is ready</h2><p>Accounts, authorization boundaries, facilities, medicine master data, inventory, search and audit records are now in place.</p></div></section>{% endblock %}

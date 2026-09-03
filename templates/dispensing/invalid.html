@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}Prescription not found — MedLocate{% endblock %}
+{% block content %}<section class="auth-page"><div class="auth-card empty-state"><span>!</span><h1>Prescription not found</h1><p>The token is invalid or does not correspond to a prescription. No clinical information was exposed.</p><a class="button button-primary" href="{% url 'dispense_scan' %}">Try another token</a></div></section>{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}MedLocate — Find medicine with fewer journeys{% endblock %}
+{% block content %}
+<section class="photo-hero" aria-label="MedLocate pharmacy service">
+  <div class="photo-carousel" data-carousel aria-roledescription="carousel">
+    <div class="photo-hero-stage" aria-live="off">
+      <div class="photo-carousel-slide is-active" data-carousel-slide aria-hidden="false"><img src="{% static 'medlocate/img/hero-medlocate-pharmacy.png' %}" alt="Patients and pharmacy professionals inside a MedLocate pharmacy" width="1774" height="887" fetchpriority="high"></div>
+      <div class="photo-carousel-slide" data-carousel-slide aria-hidden="true"><img src="{% static 'medlocate/img/hero-pharmacy.jpg' %}" alt="Patients being assisted by professionals inside a pharmacy" width="836" height="418"></div>
+    </div>
+    <button class="carousel-arrow carousel-previous" type="button" data-carousel-previous aria-label="Show previous image">‹</button>
+    <button class="carousel-arrow carousel-next" type="button" data-carousel-next aria-label="Show next image">›</button>
+    <div class="carousel-dots" aria-label="Choose hero image">
+      <button class="is-active" type="button" data-carousel-dot="0" aria-label="Show image 1" aria-current="true"></button>
+      <button type="button" data-carousel-dot="1" aria-label="Show image 2" aria-current="false"></button>
+    </div>
+  </div>
+</section>
+<nav class="platform-strip" id="platform-scope" aria-label="MedLocate platform services">
+  <div class="wide-shell platform-strip-inner">
+    {% if user.is_authenticated %}<a href="{% url 'dashboard' %}">{% else %}<a href="{% url 'register' %}">{% endif %}
+      <small>Platform</small><strong>Overview</strong><span aria-hidden="true">›</span>
+    </a>
+    <a href="{% url 'medicine_search' %}">
+      <small>Patients</small><strong>Find Medicine</strong><span aria-hidden="true">›</span>
+    </a>
+    <a href="{% url 'doctor_prescription_list' %}">
+      <small>Doctors</small><strong>Prescriptions</strong><span aria-hidden="true">›</span>
+    </a>
+    <a href="{% url 'dispense_scan' %}">
+      <small>Dispensers</small><strong>Verify &amp; Dispense</strong><span aria-hidden="true">›</span>
+    </a>
+    <a href="{% url 'inventory_list' %}">
+      <small>Facilities</small><strong>Inventory</strong><span aria-hidden="true">›</span>
+    </a>
+  </div>
+</nav>
+{% endblock %}
