@@ -15,6 +15,28 @@ Public patient registration, guest stock search and patient prescription routes 
 
 Use synthetic demonstration data only. Recorded stock is advisory, not a reservation. The prototype does not provide treatment advice or billing.
 
+## Get the latest code
+
+If this is your first time setting up MedLocate, clone the repository and enter the project directory:
+
+```bash
+git clone https://github.com/Yardsphuthego/MedLocate.git
+cd MedLocate
+```
+
+If you already have the project, save or commit any local changes first, then update your checkout:
+
+```bash
+cd MedLocate
+git pull --ff-only origin main
+source .venv/bin/activate
+pip install -r requirements/development.txt
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8001
+```
+
+The update commands use your existing PostgreSQL database and do not reset its data. If `.venv` does not exist yet, follow the quick start below to create it. Open <http://127.0.0.1:8001/> after starting the server.
+
 ## Quick start
 
 Python 3.12+ and PostgreSQL are required for the normal workflow. With a local PostgreSQL server accepting your OS account:
