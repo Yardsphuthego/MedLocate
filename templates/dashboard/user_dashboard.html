@@ -1,32 +1,53 @@
-{% extends 'base.html' %}
-{% block title %}{{ dashboard_role }} dashboard — MedLocate{% endblock %}
+{% extends 'dashboard/unfold_base.html' %}
 {% block content %}
-<section class="workspace-banner">
-  <div class="wide-shell workspace-banner-inner">
-    <div><span class="workspace-eyebrow">{{ dashboard_role }} workspace</span><h1>Welcome, {{ user.first_name|default:user.username }}</h1><p>{{ dashboard_intro }}</p></div>
-    <div class="workspace-identity"><small>Signed in as</small><strong>{{ user.get_full_name|default:user.username }}</strong><span>{{ dashboard_role }}</span></div>
-  </div>
-</section>
-<section class="dashboard-metrics wide-shell" aria-label="Workspace summary">
-  {% for metric in metrics %}<article><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong><small>{{ metric.note }}</small></article>{% endfor %}
-</section>
-<section class="dashboard-body wide-shell">
-  <div class="dashboard-main-column">
-    <section class="dashboard-panel">
-      <header><div><span class="kicker">Latest activity</span><h2>{{ recent_heading }}</h2></div><span>{{ recent_rows|length }} shown</span></header>
-      <div class="dashboard-activity-list">
-        {% for row in recent_rows %}
-          {% if row.url %}<a href="{{ row.url }}">{% else %}<div>{% endif %}
-            <span class="activity-marker" aria-hidden="true"></span><div><strong>{{ row.title }}</strong><small>{{ row.meta }}</small></div><em class="status-chip {{ row.status_class }}">{{ row.status }}</em><b aria-hidden="true">{% if row.url %}›{% endif %}</b>
-          {% if row.url %}</a>{% else %}</div>{% endif %}
-        {% empty %}<div class="dashboard-empty"><strong>No activity yet</strong><span>Your latest role-authorized activity will appear here.</span></div>{% endfor %}
-      </div>
+<div class="med-workspace-content med-professional-dashboard">
+  <header class="med-ops-header">
+    <div class="med-ops-heading"><h1>{{ workspace_name }}</h1></div>
+    <div class="med-ops-toolbar">
+      <span>Updated <time datetime="{{ updated_at|date:'c' }}">{{ updated_at|date:'d M Y, H:i' }}</time></span>
+      <a class="med-ops-refresh" href="{{ request.get_full_path }}">Refresh</a>
+      {% if primary_action %}<a class="med-operations-action" href="{{ primary_action.url }}">{{ primary_action.label }}</a>{% endif %}
+    </div>
+  </header>
+
+  <section class="med-operations-stats med-professional-totals" aria-label="Current totals">
+    {% for metric in metrics %}<div><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong></div>{% endfor %}
+  </section>
+
+  <section class="med-operations-section med-professional-worklist" aria-labelledby="staff-worklist-title">
+    <div class="med-section-title"><div><h2 id="staff-worklist-title">{{ focus_heading }}</h2></div>{% if focus_url %}<a href="{{ focus_url }}">View all</a>{% endif %}</div>
+    {% if focus_rows %}<div class="med-operations-table-wrap"><table class="med-table med-professional-table"><thead><tr><th>Record</th><th>Details</th><th>Status</th></tr></thead><tbody>
+      {% for row in focus_rows %}<tr><td data-label="Record"><strong>{% if row.url %}<a href="{{ row.url }}">{{ row.title }}</a>{% else %}{{ row.title }}{% endif %}</strong></td><td data-label="Details">{{ row.meta }}</td><td data-label="Status"><span class="med-status med-status-{{ row.status_class }}">{{ row.status }}</span></td></tr>{% endfor %}
+    </tbody></table></div>{% else %}<p class="med-professional-empty">{{ focus_empty }}</p>{% endif %}
+  </section>
+
+  <div class="med-operations-lower med-professional-lower">
+    <section class="med-operations-section" aria-labelledby="stock-preview-title">
+      <div class="med-section-title"><div><h2 id="stock-preview-title">{{ stock_heading }}</h2></div>{% if stock_url %}<a href="{{ stock_url }}">Open stock</a>{% endif %}</div>
+      {% if stock_preview %}<div class="med-operations-table-wrap"><table class="med-table med-professional-table med-professional-stock"><thead><tr><th>Medicine</th><th>Facility</th><th>Units</th><th>Updated</th></tr></thead><tbody>
+        {% for item in stock_preview %}<tr><td data-label="Medicine"><strong>{{ item.medicine.name }}</strong><small>{{ item.medicine.strength }} · {{ item.medicine.form }}</small></td><td data-label="Facility">{{ item.facility.name }}</td><td data-label="Units">{{ item.quantity }}</td><td data-label="Updated">{{ item.updated_at|date:'d M, H:i' }}</td></tr>{% endfor %}
+      </tbody></table></div>{% else %}<p class="med-professional-empty">No stock records in this scope.</p>{% endif %}
     </section>
-    {% if recent_uploads %}<section class="dashboard-panel dashboard-upload-panel"><header><div><span class="kicker">Inventory imports</span><h2>Recent uploads</h2></div></header><div class="dashboard-activity-list">{% for upload in recent_uploads %}<a href="{% url 'inventory_upload_preview' upload.pk %}"><span class="activity-marker" aria-hidden="true"></span><div><strong>{{ upload.original_name }}</strong><small>{{ upload.facility.name }} · {{ upload.created_at|date:'d M Y, H:i' }}</small></div><em class="status-chip {{ upload.status }}">{{ upload.get_status_display }}</em><b aria-hidden="true">›</b></a>{% endfor %}</div></section>{% endif %}
+
+    {% if show_activity_panel %}<section class="med-operations-section" aria-labelledby="staff-activity-title">
+      <div class="med-section-title"><div><h2 id="staff-activity-title">{{ recent_heading }}</h2></div><a href="{% url 'staff_reports' %}">History</a></div>
+      <div class="med-professional-records">{% for row in recent_rows %}<div><span><strong>{% if row.url %}<a href="{{ row.url }}">{{ row.title }}</a>{% else %}{{ row.title }}{% endif %}</strong><small>{{ row.meta }}</small></span><span class="med-status med-status-{{ row.status_class }}">{{ row.status }}</span></div>{% empty %}<p>No recent activity.</p>{% endfor %}</div>
+    </section>{% endif %}
+
+    {% if shift_stats %}<section class="med-operations-section" aria-labelledby="staff-shift-title">
+      <div class="med-section-title"><div><h2 id="staff-shift-title">Today</h2></div><a href="{% url 'staff_reports' %}">History</a></div>
+      <div class="med-professional-shift">{% for stat in shift_stats %}<div><span>{{ stat.label }}</span><strong>{{ stat.value }}</strong></div>{% endfor %}</div>
+    </section>{% endif %}
+
+    {% if recent_uploads %}<section class="med-operations-section" aria-labelledby="staff-uploads-title">
+      <div class="med-section-title"><div><h2 id="staff-uploads-title">Recent imports</h2></div><a href="{% url 'inventory_upload' %}">New import</a></div>
+      <div class="med-professional-records">{% for upload in recent_uploads %}<div><span><strong><a href="{% url 'inventory_upload_preview' upload.pk %}">{{ upload.original_name }}</a></strong><small>{{ upload.facility.name }} · {{ upload.created_at|date:'d M Y, H:i' }}</small></span><span class="med-status">{{ upload.get_status_display }}</span></div>{% endfor %}</div>
+    </section>{% endif %}
+
+    {% if facilities %}<section class="med-operations-section" aria-labelledby="staff-facilities-title">
+      <div class="med-section-title"><div><h2 id="staff-facilities-title">Assigned facilities</h2></div><span>{{ facilities|length }} total</span></div>
+      <div class="med-professional-records">{% for facility in facilities %}<div><span><strong>{{ facility.name }}</strong><small>{{ facility.get_facility_type_display }} · {{ facility.address }}</small></span></div>{% endfor %}</div>
+    </section>{% endif %}
   </div>
-  <aside class="dashboard-sidebar">
-    <section class="dashboard-actions"><span class="kicker">Workspace actions</span><h2>What would you like to do?</h2><nav>{% for action in quick_actions %}<a href="{{ action.url }}"><span><strong>{{ action.label }}</strong><small>{{ action.detail }}</small></span><b aria-hidden="true">→</b></a>{% endfor %}</nav></section>
-    {% if facilities %}<section class="dashboard-facilities"><span class="kicker">Access scope</span><h2>Assigned facilities</h2>{% for facility in facilities %}<div><strong>{{ facility.name }}</strong><small>{{ facility.get_facility_type_display }} · {{ facility.address }}</small></div>{% endfor %}</section>{% endif %}
-  </aside>
-</section>
+</div>
 {% endblock %}

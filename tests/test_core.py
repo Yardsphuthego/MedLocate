@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from apps.accounts.models import PatientProfile, User
+from apps.accounts.models import PatientProfile, StaffProfile, User
 from apps.audit.models import AuditEvent
 from apps.facilities.models import Facility, FacilityMembership
 from apps.inventory.models import InventoryItem
@@ -21,6 +21,7 @@ class CoreFixture(TestCase):
             username="officer", email="officer@example.test", password="correct-horse-battery",
             primary_role=User.Role.INVENTORY,
         )
+        StaffProfile.objects.create(user=self.officer)
         self.facility = Facility.objects.create(
             name="Test Clinic", facility_type=Facility.Type.CLINIC, address="Gaborone",
             latitude=-24.65, longitude=25.91, status=Facility.Status.ACTIVE,
@@ -63,17 +64,14 @@ class SearchTests(CoreFixture):
         self.assertGreater(distance, 5)
         self.assertLess(distance, 7)
 
-    def test_patient_search_records_history(self):
+    def test_patient_search_is_closed(self):
         self.client.force_login(self.patient)
-        response = self.client.get(reverse("medicine_search"), {"q": "Panado"})
-        self.assertContains(response, "Test Clinic")
-        self.assertEqual(SearchHistory.objects.filter(patient=self.patient).count(), 1)
+        self.assertEqual(self.client.get(reverse("medicine_search"), {"q": "Panado"}).status_code, 403)
+        self.assertEqual(SearchHistory.objects.count(), 0)
 
-    def test_guest_can_search_without_creating_history(self):
+    def test_guest_must_sign_in(self):
         response = self.client.get(reverse("medicine_search"), {"q": "Panado"})
-        self.assertContains(response, "Test Clinic")
-        self.assertContains(response, "No account required")
-        self.assertContains(response, "Create account to save")
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(SearchHistory.objects.count(), 0)
 
     def test_non_patient_cannot_use_patient_search(self):
@@ -130,12 +128,9 @@ class InventorySecurityTests(CoreFixture):
 
 
 class DashboardTests(CoreFixture):
-    def test_patient_receives_patient_dashboard(self):
+    def test_patient_cannot_open_staff_dashboard(self):
         self.client.force_login(self.patient)
-        response = self.client.get(reverse("dashboard"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Patient workspace")
-        self.assertContains(response, "Find medicine")
+        self.assertEqual(self.client.get(reverse("dashboard")).status_code, 403)
 
     def test_inventory_dashboard_respects_facility_scope(self):
         self.client.force_login(self.officer)
@@ -151,24 +146,16 @@ class DashboardTests(CoreFixture):
         administrator.save(update_fields=["primary_role"])
         self.client.force_login(administrator)
         response = self.client.get(reverse("dashboard"))
-        self.assertContains(response, "Platform command centre")
+        self.assertContains(response, "<h1>Operations</h1>", html=True)
         self.assertContains(response, "Test Clinic")
         self.assertContains(response, "Other Clinic")
 
 
 class RegistrationTests(TestCase):
-    def test_account_pages_open_home_overlays(self):
+    def test_login_opens_home_overlay(self):
         self.assertRedirects(self.client.get(reverse("login")), "/#sign-in")
-        self.assertRedirects(self.client.get(reverse("register")), "/#register")
 
-    def test_public_registration_always_creates_patient(self):
-        response = self.client.post(reverse("register"), {
-            "username": "new.patient", "first_name": "Synthetic", "last_name": "Person",
-            "email": "new@example.test", "phone": "+267 71000009",
-            "password1": "LongPrototypePassword2026!", "password2": "LongPrototypePassword2026!",
-            "consent_acknowledged": "on",
-        })
-        self.assertRedirects(response, reverse("medicine_search"))
-        user = User.objects.get(username="new.patient")
-        self.assertEqual(user.primary_role, User.Role.PATIENT)
-        self.assertTrue(user.patient_profile.consent_acknowledged)
+    def test_public_registration_is_closed(self):
+        self.assertEqual(self.client.get(reverse("register")).status_code, 410)
+        self.assertEqual(self.client.post(reverse("register"), {"username": "new.patient"}).status_code, 410)
+        self.assertFalse(User.objects.filter(username="new.patient").exists())

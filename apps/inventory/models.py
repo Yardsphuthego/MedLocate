@@ -8,6 +8,7 @@ from django.utils import timezone
 class InventoryItem(models.Model):
     facility = models.ForeignKey("facilities.Facility", on_delete=models.CASCADE, related_name="inventory")
     medicine = models.ForeignKey("medicines.Medicine", on_delete=models.PROTECT, related_name="inventory")
+    batch_number = models.CharField(max_length=80, blank=True)
     quantity = models.PositiveIntegerField(default=0)
     expiry_date = models.DateField(null=True, blank=True)
     low_stock_threshold = models.PositiveIntegerField(default=10)
@@ -15,7 +16,8 @@ class InventoryItem(models.Model):
     updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=("facility", "medicine", "expiry_date"), name="unique_inventory_batch")]
+        constraints = [models.UniqueConstraint(fields=("facility", "medicine", "batch_number", "expiry_date"), name="unique_inventory_batch"),
+                       models.UniqueConstraint(fields=("facility", "medicine", "batch_number"), condition=models.Q(expiry_date__isnull=True), name="unique_undated_inventory_batch")]
         ordering = ("medicine__name",)
 
     @property

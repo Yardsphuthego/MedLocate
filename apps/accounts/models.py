@@ -5,6 +5,8 @@ from django.db import models
 class User(AbstractUser):
     class Role(models.TextChoices):
         PATIENT = "patient", "Patient"
+        NURSE = "nurse", "Nurse"
+        PHARMACY = "pharmacy", "Pharmacy staff"
         DOCTOR = "doctor", "Doctor"
         DISPENSER = "dispenser", "Dispenser"
         INVENTORY = "inventory", "Inventory officer"

@@ -1,0 +1,26 @@
+{% extends 'dashboard/unfold_base.html' %}
+{% load unfold %}
+{% block title %}History & reports | MedLocate{% endblock %}
+{% block content %}
+<div class="med-workspace-content">
+  <div class="med-page-heading"><div><p class="med-eyebrow">{{ dashboard_role }} / Records</p><h1>History &amp; reports</h1><p>Review records within your role and assigned facilities.</p></div><a class="med-report-back" href="{% url 'dashboard' %}">Back to home</a></div>
+  <div class="med-main-grid">
+    <div class="med-main-stack">
+      {% component 'unfold/components/card.html' with title='Activity records' class='med-panel' %}
+        <p class="med-report-count">{{ row_count }} records · {{ form.report.value|title }} report</p>
+        <div class="med-table-scroll"><table class="med-table"><thead><tr>{% for heading in headers %}<th>{{ heading }}</th>{% endfor %}</tr></thead><tbody>{% for row in page %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ headers|length|default:1 }}">No records match these filters. Choose another date range, medicine or facility.</td></tr>{% endfor %}</tbody></table></div>
+        <nav class="dashboard-pagination" aria-label="Report pages"><span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span><div>{% if page.has_previous %}<a href="?{{ params }}&amp;page={{ page.previous_page_number }}">Previous</a>{% endif %}{% if page.has_next %}<a href="?{{ params }}&amp;page={{ page.next_page_number }}">Next</a>{% endif %}</div></nav>
+      {% endcomponent %}
+    </div>
+    <aside class="med-side-stack">
+      {% component 'unfold/components/card.html' with title='Report filters' class='med-panel' %}
+        <form method="get" class="med-report-filters">{{ form.non_field_errors }}{% for field in form %}<label>{{ field.label }}{{ field }}{{ field.errors }}</label>{% endfor %}<button type="submit">Apply filters</button></form>
+        <a class="med-panel-link" href="?{{ params }}&amp;export=csv">Export filtered CSV →</a>
+      {% endcomponent %}
+      {% component 'unfold/components/card.html' with title='Protected records' class='med-panel' %}
+        <p class="med-report-scope">Read-only history. Exports exclude recipient names and clinical instructions.</p>
+      {% endcomponent %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

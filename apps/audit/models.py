@@ -14,5 +14,21 @@ class AuditEvent(models.Model):
     class Meta:
         ordering = ("-timestamp",)
 
+    @property
+    def action_label(self):
+        labels = {
+            "account.created": "Account created",
+            "inventory.updated": "Stock updated",
+            "inventory.upload_validated": "Inventory upload validated",
+            "inventory.upload_committed": "Inventory import committed",
+            "prescription.created": "Prescription issued",
+            "prescription.verified": "Prescription verified",
+            "prescription.dispensed": "Medicine dispensed",
+            "prescription.cancelled": "Prescription cancelled",
+            "verification.rejected": "Verification rejected",
+            "dispensing.rejected": "Dispensing rejected",
+        }
+        return labels.get(self.action, self.action.replace(".", " ").replace("_", " ").capitalize())
+
     def delete(self, *args, **kwargs):
         raise TypeError("Audit events are append-only.")

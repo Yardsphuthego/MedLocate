@@ -1,0 +1,29 @@
+{% extends 'dashboard/unfold_base.html' %}
+{% block title %}Create user — MedLocate{% endblock %}
+{% block content %}
+<section class="workspace-banner admin-workspace-banner">
+  <div class="wide-shell workspace-banner-inner">
+    <div><span class="workspace-eyebrow">Super administrator</span><h1>Create user</h1><p>Add an account and assign access to the appropriate workspace.</p></div>
+    <a class="workspace-admin-link" href="{% url 'dashboard' %}">Back to dashboard <span>→</span></a>
+  </div>
+</section>
+<section class="admin-dashboard-body wide-shell">
+  <div class="admin-dashboard-main">
+    <section class="dashboard-panel">
+      <header><div><span class="kicker">Account setup</span><h2>User details</h2></div></header>
+      <form method="post" class="admin-user-form">
+        {% csrf_token %}
+        {% if form.errors %}<div class="error" role="alert">The account was not created. Please correct the errors below.</div>{% endif %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+        <div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>{{ field }}{% if field.help_text %}<small id="{{ field.auto_id }}_helptext">{{ field.help_text|safe }}</small>{% endif %}{% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}</div>
+        {% endfor %}
+        <div class="form-actions"><a class="button button-light" href="{% url 'dashboard' %}">Cancel</a><button class="button button-primary" type="submit">Create user</button></div>
+      </form>
+    </section>
+  </div>
+  <aside class="admin-dashboard-sidebar">
+    <section class="dashboard-actions"><span class="kicker">Access guidance</span><h2>Choose the right role</h2><div class="admin-user-guidance"><p><strong>Doctor</strong><br>Search availability and create secure prescriptions.</p><p><strong>Nurse</strong><br>Search stock, verify prescriptions and record dispensing.</p><p><strong>Pharmacy staff</strong><br>Maintain facility inventory, import stock and dispense prescriptions.</p><p><strong>Facility administrator</strong><br>Maintain inventory at the assigned facility.</p><p><strong>Platform administrator</strong><br>View network operations. Management permissions are assigned separately.</p><p>Share account details securely with the staff member.</p></div></section>
+  </aside>
+</section>
+{% endblock %}

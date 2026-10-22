@@ -1,0 +1,12 @@
+{% load unfold %}
+{% component 'unfold/components/card.html' with title=focus_heading description=focus_intro class='med-panel' %}
+  {% if focus_url %}<a class="med-panel-link" href="{{ focus_url }}">View all <span aria-hidden="true">→</span></a>{% endif %}
+  <div class="med-records">
+    {% for row in focus_rows %}
+      {% if row.url %}<a class="med-record" href="{{ row.url }}">{% else %}<div class="med-record">{% endif %}
+        <span class="med-record-copy"><strong>{{ row.title }}</strong><small>{{ row.meta }}</small></span>
+        <span class="med-status med-status-{{ row.status_class }}">{{ row.status }}</span>
+      {% if row.url %}</a>{% else %}</div>{% endif %}
+    {% empty %}<div class="med-empty"><strong>No records yet</strong><span>{{ focus_empty }}</span>{% if primary_action %}<a href="{{ primary_action.url }}">{{ primary_action.label }} →</a>{% endif %}</div>{% endfor %}
+  </div>
+{% endcomponent %}

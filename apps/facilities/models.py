@@ -23,6 +23,9 @@ class Facility(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.DRAFT)
 
+    class Meta:
+        verbose_name_plural = "Facilities"
+
     def clean(self):
         if self.status == self.Status.ACTIVE and (self.latitude is None or self.longitude is None):
             raise ValidationError("An active facility must have latitude and longitude.")

@@ -1,0 +1,7 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | MedLocate{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'medlocate/css/unfold_workspace.css' %}?v=17"><link rel="stylesheet" href="{% static 'medlocate/css/unfold_admin.css' %}?v=2">{% endblock %}
+{% block header %}{% if not is_popup %}{% include 'dashboard/workspace_header.html' %}{% endif %}{% include 'unfold/helpers/header.html' %}{% endblock %}

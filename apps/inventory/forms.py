@@ -21,7 +21,7 @@ class InventoryItemForm(forms.ModelForm):
 
     class Meta:
         model = InventoryItem
-        fields = ("medicine", "quantity", "expiry_date", "low_stock_threshold")
+        fields = ("medicine", "batch_number", "quantity", "expiry_date", "low_stock_threshold")
         widgets = {"expiry_date": forms.DateInput(attrs={"type": "date"})}
 
     def __init__(self, *args, facility=None, **kwargs):
@@ -36,7 +36,7 @@ class InventoryItemForm(forms.ModelForm):
         medicine = cleaned.get("medicine")
         if self.facility and medicine:
             duplicate = InventoryItem.objects.filter(
-                facility=self.facility, medicine=medicine, expiry_date=expiry
+                facility=self.facility, medicine=medicine, batch_number=cleaned.get("batch_number", ""), expiry_date=expiry
             ).exclude(pk=self.instance.pk)
             if duplicate.exists():
                 self.add_error("medicine", "This facility already has a stock record for this medicine and expiry date.")

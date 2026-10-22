@@ -1,3 +1,3 @@
-{% extends 'base.html' %}
+{% extends 'dashboard/unfold_base.html' %}
 {% block title %}Cancel prescription — MedLocate{% endblock %}
 {% block content %}<section class="auth-page"><div class="auth-card"><span class="kicker">Irreversible status change</span><h1>Cancel prescription?</h1><p>Prescription {{ prescription.uuid|truncatechars:13 }} will no longer be available for dispensing. Previously dispensed medicine and audit records remain unchanged.</p><form method="post">{% csrf_token %}<div class="form-actions"><a class="button button-light" href="{% url 'doctor_prescription_detail' prescription.pk %}">Keep active</a><button class="button button-danger">Cancel prescription</button></div></form></div></section>{% endblock %}

@@ -1,5 +1,8 @@
 from pathlib import Path
 import os
+import getpass
+from django.templatetags.static import static
+from django.urls import reverse_lazy
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
@@ -8,6 +11,7 @@ DEBUG = False
 ALLOWED_HOSTS = [host.strip() for host in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
 
 INSTALLED_APPS = [
+    "unfold",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -24,6 +28,27 @@ INSTALLED_APPS = [
     "apps.dashboard",
 ]
 
+UNFOLD = {
+    "SITE_TITLE": "MedLocate administration",
+    "SITE_HEADER": "MedLocate",
+    "SITE_SUBHEADER": "Platform administration",
+    "SITE_URL": reverse_lazy("dashboard"),
+    "SITE_ICON": lambda request: static("medlocate/img/favicon.svg"),
+    "SITE_LOGO": lambda request: static("medlocate/img/medlocate-logo.png"),
+    "SITE_FAVICONS": [
+        {"rel": "icon", "type": "image/svg+xml", "href": lambda request: static("medlocate/img/favicon.svg")},
+    ],
+    "BORDER_RADIUS": "4px",
+    "COLORS": {
+        "primary": {
+            "50": "#eef8fb", "100": "#d8eef6", "200": "#b4dfea",
+            "300": "#81c9df", "400": "#48afd0", "500": "#1892ba",
+            "600": "#087aa8", "700": "#086488", "800": "#0b526e",
+            "900": "#0d455c", "950": "#082e40",
+        },
+    },
+}
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -31,6 +56,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "apps.dashboard.middleware.WorkspaceAdminFrameMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -43,16 +69,18 @@ TEMPLATES = [{
         "django.template.context_processors.request",
         "django.contrib.auth.context_processors.auth",
         "django.contrib.messages.context_processors.messages",
+        "apps.accounts.context_processors.staff_facilities",
+        "apps.dashboard.context_processors.workspace_context",
     ]},
 }]
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-if os.getenv("POSTGRES_DB"):
+if os.getenv("MEDLOCATE_USE_SQLITE") != "1":
     DATABASES = {"default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ["POSTGRES_DB"],
-        "USER": os.getenv("POSTGRES_USER", "postgres"),
+        "NAME": os.getenv("POSTGRES_DB", "medlocate"),
+        "USER": os.getenv("POSTGRES_USER", getpass.getuser()),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
         "HOST": os.getenv("POSTGRES_HOST", "localhost"),
         "PORT": os.getenv("POSTGRES_PORT", "5432"),

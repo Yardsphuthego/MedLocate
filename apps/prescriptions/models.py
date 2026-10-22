@@ -15,7 +15,10 @@ class Prescription(models.Model):
         CANCELLED = "cancelled", "Cancelled"
 
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    patient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="patient_prescriptions")
+    patient = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name="patient_prescriptions")
+    issuing_facility = models.ForeignKey("facilities.Facility", null=True, blank=True, on_delete=models.PROTECT)
+    recipient_name = models.CharField(max_length=160, blank=True)
+    recipient_reference = models.CharField(max_length=80, blank=True, help_text="Local patient or encounter reference for identity checks.")
     prescriber = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="issued_prescriptions")
     issued_at = models.DateTimeField(default=timezone.now)
     valid_until = models.DateTimeField(db_index=True)
@@ -31,6 +34,20 @@ class Prescription(models.Model):
     def clean(self):
         if self.valid_until and self.issued_at and self.valid_until <= self.issued_at:
             raise ValidationError({"valid_until": "Prescription expiry must be after its issue time."})
+
+    @property
+    def recipient_display(self):
+        return self.recipient_name or (str(self.patient) if self.patient_id else "Recipient not recorded")
+
+    @property
+    def effective_status(self):
+        if self.status in {self.Status.ACTIVE, self.Status.PARTIAL} and self.valid_until <= timezone.now():
+            return self.Status.EXPIRED
+        return self.status
+
+    @property
+    def status_label(self):
+        return dict(self.Status.choices)[self.effective_status]
 
     @property
     def is_usable(self):
@@ -77,3 +94,18 @@ class DispenseEvent(models.Model):
 
     class Meta:
         ordering = ("timestamp",)
+
+
+class DispenseTransaction(models.Model):
+    key = models.UUIDField(unique=True)
+    prescription = models.ForeignKey(Prescription, on_delete=models.PROTECT)
+    facility = models.ForeignKey("facilities.Facility", on_delete=models.PROTECT)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    quantities = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class DispenseAllocation(models.Model):
+    event = models.ForeignKey(DispenseEvent, on_delete=models.PROTECT, related_name='allocations')
+    stock = models.ForeignKey('inventory.InventoryItem', on_delete=models.PROTECT, related_name='dispense_allocations')
+    quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])

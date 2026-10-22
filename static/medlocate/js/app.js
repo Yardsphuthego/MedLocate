@@ -60,56 +60,44 @@ document.querySelectorAll('[data-carousel]').forEach((carousel) => {
 
 const loginPanel = document.querySelector('[data-login-panel]');
 const loginOpeners = [...document.querySelectorAll('[data-login-open]')];
-const closeLogin = () => {
-  if (!loginPanel) return;
-  loginPanel.hidden = true;
-  loginPanel.classList.remove('is-open');
-  loginOpeners.forEach((opener) => opener.setAttribute('aria-expanded', 'false'));
+let lastLoginOpener;
+const syncLoginClosed = () => {
+  loginOpeners.forEach(opener => opener.setAttribute('aria-expanded', 'false'));
+  const password = document.getElementById('dropdown-password');
+  const reveal = loginPanel?.querySelector('[data-password-toggle]');
+  if (password) password.type = 'password';
+  if (reveal) { reveal.textContent = 'Show'; reveal.setAttribute('aria-label', 'Show password'); reveal.setAttribute('aria-pressed', 'false'); }
+  lastLoginOpener?.focus();
 };
+const closeLogin = () => { if (loginPanel?.open) loginPanel.close(); };
 const openLogin = () => {
-  if (!loginPanel) return;
-  document.querySelectorAll('.nav-dropdown').forEach((dropdown) => dropdown.removeAttribute('open'));
-  loginPanel.hidden = false;
-  window.requestAnimationFrame(() => loginPanel.classList.add('is-open'));
-  loginOpeners.forEach((opener) => opener.setAttribute('aria-expanded', 'true'));
-  loginPanel.querySelector('input[name="username"]')?.focus();
+  if (!loginPanel || loginPanel.open) return;
+  document.querySelectorAll('.nav-dropdown').forEach(dropdown => dropdown.removeAttribute('open'));
+  nav?.classList.remove('is-open');
+  toggle?.setAttribute('aria-expanded', 'false');
+  loginPanel.show();
+  loginOpeners.forEach(opener => opener.setAttribute('aria-expanded', 'true'));
+  document.getElementById('dropdown-username')?.focus({preventScroll: true});
 };
-loginOpeners.forEach((opener) => opener.addEventListener('click', (event) => {
+loginOpeners.forEach(opener => opener.addEventListener('click', event => {
   if (!loginPanel) return;
-  event.preventDefault();
-  loginPanel.hidden ? openLogin() : closeLogin();
+  event.preventDefault(); lastLoginOpener = opener; openLogin();
 }));
-loginPanel?.querySelectorAll('[data-login-close]').forEach((button) => button.addEventListener('click', closeLogin));
-document.addEventListener('click', (event) => {
-  if (!loginPanel || loginPanel.hidden || loginPanel.contains(event.target) || event.target.closest('[data-login-open]')) return;
-  closeLogin();
+loginPanel?.addEventListener('close', syncLoginClosed);
+loginPanel?.querySelector('[data-login-close]')?.addEventListener('click', closeLogin);
+document.addEventListener('click', event => {
+  if (loginPanel?.open && !loginPanel.contains(event.target) && !event.target.closest('[data-login-open]')) closeLogin();
 });
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && loginPanel && !loginPanel.hidden) closeLogin();
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && loginPanel?.open) closeLogin();
+});
+loginPanel?.querySelector('[data-password-toggle]')?.addEventListener('click', event => {
+  const password = document.getElementById('dropdown-password');
+  const visible = password.type === 'password';
+  password.type = visible ? 'text' : 'password';
+  event.currentTarget.textContent = visible ? 'Hide' : 'Show';
+  event.currentTarget.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
+  event.currentTarget.setAttribute('aria-pressed', String(visible));
 });
 if (window.location.hash === '#sign-in') openLogin();
-
-const registerModal = document.querySelector('[data-register-modal]');
-const openRegister = () => {
-  if (!registerModal || typeof registerModal.showModal !== 'function') return;
-  closeLogin();
-  if (!registerModal.open) registerModal.showModal();
-  registerModal.querySelector('input[name="first_name"]')?.focus();
-};
-const closeRegister = () => {
-  if (registerModal?.open) registerModal.close();
-};
-document.querySelectorAll('[data-register-open]').forEach((link) => link.addEventListener('click', (event) => {
-  if (!registerModal || typeof registerModal.showModal !== 'function') return;
-  event.preventDefault();
-  openRegister();
-}));
-registerModal?.querySelectorAll('[data-register-close]').forEach((button) => button.addEventListener('click', closeRegister));
-registerModal?.addEventListener('click', (event) => {
-  if (event.target === registerModal) closeRegister();
-});
-registerModal?.querySelector('[data-register-to-login]')?.addEventListener('click', () => {
-  closeRegister();
-  openLogin();
-});
-if (window.location.hash === '#register') openRegister();
+window.addEventListener('hashchange', () => { if (window.location.hash === '#sign-in') openLogin(); });

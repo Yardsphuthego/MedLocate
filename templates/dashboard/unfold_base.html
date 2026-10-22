@@ -1,0 +1,11 @@
+{% extends 'unfold/layouts/base.html' %}
+{% load static %}
+
+{% block title %}{{ workspace_name }} | MedLocate{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block extrastyle %}<link rel="stylesheet" href="{% static 'medlocate/css/unfold_workspace.css' %}?v=17">{% endblock %}
+{% block extrahead %}<script src="{% static 'medlocate/js/scanner.js' %}?v=2" defer></script><script src="{% static 'medlocate/js/workspace.js' %}?v=7" defer></script>{% endblock %}
+
+{% block content_before %}{% include 'dashboard/workspace_header.html' %}{% endblock %}
+
+{% block footer %}<footer class="med-workspace-footer">MedLocate © {% now 'Y' %}</footer>{% endblock %}

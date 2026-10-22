@@ -1,0 +1,7 @@
+{% load unfold %}
+{% component 'unfold/components/card.html' with title=stock_heading description='Recent positive stock notes at active facilities.' class='med-panel' %}
+  {% if stock_url %}<a class="med-panel-link" href="{{ stock_url }}">Open stock <span aria-hidden="true">→</span></a>{% endif %}
+  <div class="med-records">
+    {% for item in stock_preview %}<div class="med-record med-stock-record"><span class="med-record-copy"><strong>{{ item.medicine.name }}</strong><small>{{ item.medicine.strength }} · {{ item.medicine.form }} · {{ item.facility.name }}</small><small>Updated {{ item.updated_at|date:'d M Y, H:i' }} · {{ item.freshness|title }} note</small></span><span class="med-stock-quantity"><strong>{{ item.quantity }}</strong><small>units</small></span></div>{% empty %}<div class="med-empty">No current positive stock records are available in this scope.</div>{% endfor %}
+  </div>
+{% endcomponent %}

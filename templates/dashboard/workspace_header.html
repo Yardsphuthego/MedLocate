@@ -1,0 +1,24 @@
+{% load static %}
+<header class="med-workspace-header">
+  <div class="med-workspace-header-inner">
+    <a class="med-workspace-brand" href="{% url 'dashboard' %}" aria-label="MedLocate workspace overview">
+      <img src="{% static 'medlocate/img/medlocate-logo.png' %}" alt="MedLocate — Medicine within reach">
+    </a>
+    {% if staff_facilities|length > 1 %}<form method="post" action="{% url 'select_facility' %}" class="med-facility-switch">{% csrf_token %}<label for="workspace-facility">Working facility</label><select id="workspace-facility" name="facility">{% for membership in staff_facilities %}<option value="{{ membership.facility_id }}" {% if membership.facility_id == active_facility_id %}selected{% endif %}>{{ membership.facility.name }}</option>{% endfor %}</select><button type="submit">Switch</button></form>{% endif %}
+    <div class="med-workspace-account"><span>{{ dashboard_role }}</span><strong>{{ user.get_full_name|default:user.username }}</strong></div>
+    <button class="med-theme-toggle" type="button" role="switch" aria-label="Dark mode" x-bind:aria-checked="adminTheme === 'dark' || (adminTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)" x-on:click="switchTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark'); $nextTick(() => document.dispatchEvent(new Event('medlocate:themechange')))" title="Toggle light and dark mode">
+      <svg class="med-theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+      <span class="med-theme-track"><span class="med-theme-thumb"></span></span>
+      <svg class="med-theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20.5 15.3A8.5 8.5 0 0 1 8.7 3.5 8.5 8.5 0 1 0 20.5 15.3Z"/></svg>
+    </button>
+    <form method="post" action="{% url 'logout' %}" class="med-workspace-signout">{% csrf_token %}<button type="submit">Sign out</button></form>
+  </div>
+  <nav class="med-workspace-nav" aria-label="Workspace navigation">
+    <div class="med-workspace-nav-inner">
+      <span class="med-workspace-nav-label">Workspace</span>
+      <a href="{% url 'dashboard' %}" data-workspace-tab {% if request.path == '/dashboard/' %}aria-current="page"{% endif %}>{% if user.is_superuser or user.primary_role == 'platform_admin' %}Operations{% else %}Home{% endif %}</a>
+      {% for action in workspace_tabs %}<a href="{{ action.url }}" data-workspace-tab {% if action.active %}aria-current="page"{% endif %}>{{ action.label }}</a>{% endfor %}
+      {% if user.is_staff and not workspace_tabs %}<a href="{% url 'admin:index' %}" data-workspace-tab {% if request.GET.view == '/admin/' %}aria-current="page"{% endif %}>Administration</a>{% endif %}
+    </div>
+  </nav>
+</header>

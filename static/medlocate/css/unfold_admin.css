@@ -1,0 +1,17 @@
+/* Give Unfold management tables the full workspace width. */
+#main > .med-workspace-header { flex: none; }
+#content.container { max-width: none; width: 100%; }
+#changelist, #changelist .result-list-wrapper, #changelist-form { max-width: 100%; min-width: 0; }
+#result_list { table-layout: fixed; width: 100%; }
+#result_list th, #result_list td { overflow-wrap: anywhere; white-space: normal; }
+#result_list th:first-child, #result_list td:first-child { width: 38px; }
+#result_list th:last-child, #result_list td:last-child { padding-right: 14px; }
+
+@media (max-width: 900px) {
+  #result_list th:nth-child(n+6), #result_list td:nth-child(n+6) { display: none; }
+}
+@media (max-width: 620px) {
+  #result_list th:nth-child(n+4), #result_list td:nth-child(n+4) { display: none; }
+  #result_list th:first-child, #result_list td:first-child { width: 32px; }
+  #result_list th, #result_list td { font-size: 12px; padding: 10px 7px; }
+}

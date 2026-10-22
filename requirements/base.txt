@@ -1,4 +1,5 @@
 Django==5.2.11
+django-unfold==0.110.0
 openpyxl==3.1.5
 Pillow==11.3.0
 qrcode==8.2

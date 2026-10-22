@@ -37,6 +37,7 @@ class WorkflowFixture(TestCase):
         self.dispenser = User.objects.create_user("dispenser", "dispenser@example.test", "testing-password", primary_role=User.Role.DISPENSER)
         StaffProfile.objects.create(user=self.dispenser, active=True)
         self.officer = User.objects.create_user("importer", "importer@example.test", "testing-password", primary_role=User.Role.INVENTORY)
+        StaffProfile.objects.create(user=self.officer)
         self.facility = Facility.objects.create(
             name="Workflow Clinic", facility_type=Facility.Type.CLINIC, address="Gaborone",
             latitude=-24.65, longitude=25.91, status=Facility.Status.ACTIVE,
@@ -119,7 +120,7 @@ class PrescriptionAccessTests(WorkflowFixture):
         with TemporaryDirectory() as media_root:
             with override_settings(MEDIA_ROOT=media_root):
                 response = self.client.post(reverse("doctor_prescription_create"), {
-                    "patient": self.patient.pk,
+                    "recipient_name": "Synthetic Person", "recipient_reference": "SYN-001",
                     "valid_until": (timezone.localtime() + timedelta(days=5)).strftime("%Y-%m-%dT%H:%M"),
                     "notes": "Synthetic prescription",
                     "items-TOTAL_FORMS": "3", "items-INITIAL_FORMS": "0", "items-MIN_NUM_FORMS": "1", "items-MAX_NUM_FORMS": "1000",
@@ -130,6 +131,8 @@ class PrescriptionAccessTests(WorkflowFixture):
                 prescription = Prescription.objects.get(prescriber=self.doctor)
                 self.assertRedirects(response, reverse("doctor_prescription_detail", args=[prescription.pk]))
                 self.assertEqual(prescription.items.count(), 2)
+                self.assertIsNone(prescription.patient_id)
+                self.assertEqual(prescription.recipient_reference, "SYN-001")
                 self.assertEqual(len(prescription.token_hash), 64)
                 self.assertNotIn(self.patient.username, prescription.qr_image.name)
                 self.assertTrue(prescription.qr_image.storage.exists(prescription.qr_image.name))
@@ -138,7 +141,7 @@ class PrescriptionAccessTests(WorkflowFixture):
         prescription, _, _ = self.make_prescription()
         other = User.objects.create_user("other-patient", "other@example.test", "testing-password", primary_role=User.Role.PATIENT)
         self.client.force_login(other)
-        self.assertEqual(self.client.get(reverse("patient_prescription_detail", args=[prescription.pk])).status_code, 404)
+        self.assertEqual(self.client.get(f"/patient/prescriptions/{prescription.pk}/").status_code, 404)
         self.assertEqual(self.client.get(reverse("prescription_qr", args=[prescription.pk])).status_code, 403)
 
     def test_dispenser_can_resolve_valid_opaque_token(self):

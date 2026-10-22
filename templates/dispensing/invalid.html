@@ -1,3 +1,3 @@
-{% extends 'base.html' %}
-{% block title %}Prescription not found — MedLocate{% endblock %}
-{% block content %}<section class="auth-page"><div class="auth-card empty-state"><span>!</span><h1>Prescription not found</h1><p>The token is invalid or does not correspond to a prescription. No clinical information was exposed.</p><a class="button button-primary" href="{% url 'dispense_scan' %}">Try another token</a></div></section>{% endblock %}
+{% extends 'dashboard/unfold_base.html' %}
+{% block title %}Prescription unavailable — MedLocate{% endblock %}
+{% block content %}<section class="auth-page"><div class="auth-card empty-state"><span>!</span><h1>Prescription unavailable</h1>{% if reason %}<p>{{ reason }}</p>{% endif %}{% if not reason %}<p>The reference does not match a prescription.</p>{% endif %}<p>No stock or prescription records have changed.</p><a class="button button-primary" href="{% url 'dispense_scan' %}">Try another token</a></div></section>{% endblock %}

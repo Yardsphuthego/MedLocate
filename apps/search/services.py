@@ -9,7 +9,7 @@ def haversine_km(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(lambda value: radians(float(value)), (lat1, lon1, lat2, lon2))
     dlat, dlon = lat2 - lat1, lon2 - lon1
     a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-    return 6371 * 2 * asin(sqrt(a))
+    return 6371 * 2 * asin(sqrt(min(1, max(0, a))))
 
 
 def search_stock(query, latitude=None, longitude=None):
@@ -27,4 +27,6 @@ def search_stock(query, latitude=None, longitude=None):
             distance = haversine_km(latitude, longitude, item.facility.latitude, item.facility.longitude)
         results.append({"item": item, "distance_km": distance})
     freshness_order = {"fresh": 0, "aging": 1, "stale": 2}
+    if latitude is not None and longitude is not None:
+        return sorted(results, key=lambda row: (row["distance_km"] is None, row["distance_km"] or 0))
     return sorted(results, key=lambda row: (freshness_order[row["item"].freshness], row["distance_km"] is None, row["distance_km"] or 0))

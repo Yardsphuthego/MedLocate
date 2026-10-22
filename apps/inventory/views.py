@@ -11,20 +11,13 @@ from .forms import InventoryItemForm, InventoryUploadForm
 from .models import InventoryItem, InventoryUpload
 from .services import commit_inventory_upload, save_inventory_item, validate_inventory_workbook
 
-ALLOWED_ROLES = {User.Role.INVENTORY, User.Role.FACILITY_ADMIN}
+from apps.accounts.access import INVENTORY_ROLES, require_membership
+
+ALLOWED_ROLES = INVENTORY_ROLES
 
 
 def active_membership(request):
-    if not request.user.is_authenticated:
-        raise PermissionDenied
-    if request.user.primary_role not in ALLOWED_ROLES:
-        raise PermissionDenied
-    membership = FacilityMembership.objects.select_related("facility").filter(
-        user=request.user, active=True, role__in=ALLOWED_ROLES
-    ).first()
-    if not membership:
-        raise PermissionDenied
-    return membership
+    return require_membership(request.user, INVENTORY_ROLES, request.session.get("active_facility"))
 
 
 def inventory_list(request):
@@ -81,8 +74,8 @@ def inventory_template(request):
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "inventory"
-    sheet.append(["medicine_code", "medicine_name", "strength", "form", "quantity", "expiry_date", "last_updated"])
-    sheet.append(["MED-PAR-500", "Paracetamol", "500 mg", "tablet", 25, "2027-12-31", ""])
+    sheet.append(["medicine_code", "medicine_name", "strength", "form", "quantity", "expiry_date", "last_updated", "batch_number"])
+    sheet.append(["MED-PAR-500", "Paracetamol", "500 mg", "tablet", 25, "2027-12-31", "", "BATCH-001"])
     output = __import__("io").BytesIO()
     workbook.save(output)
     response = HttpResponse(output.getvalue(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

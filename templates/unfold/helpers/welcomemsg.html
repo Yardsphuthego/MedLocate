@@ -1,0 +1,5 @@
+<div class="flex flex-row grow font-semibold items-center min-w-0 me-3">
+  <h1 class="overflow-hidden leading-5 text-important whitespace-nowrap xl:text-base">
+    {% if cl and opts %}{{ opts.verbose_name_plural|capfirst }}{% else %}{{ title }}{% endif %}
+  </h1>
+</div>

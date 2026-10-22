@@ -9,12 +9,13 @@ from .models import Prescription
 class PrescriptionForm(forms.ModelForm):
     class Meta:
         model = Prescription
-        fields = ("patient", "valid_until", "notes")
+        fields = ("recipient_name", "recipient_reference", "valid_until", "notes")
         widgets = {"valid_until": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M")}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["patient"].queryset = User.objects.filter(primary_role=User.Role.PATIENT, is_active=True).order_by("first_name", "last_name")
+        self.fields["recipient_name"].required = True
+        self.fields["recipient_reference"].required = True
         self.fields["valid_until"].input_formats = ["%Y-%m-%dT%H:%M"]
 
     def clean_valid_until(self):
@@ -22,6 +23,7 @@ class PrescriptionForm(forms.ModelForm):
         if value <= timezone.now():
             raise forms.ValidationError("Expiry must be in the future.")
         return value
+
 
 
 class PrescriptionItemForm(forms.Form):
@@ -38,7 +40,7 @@ class TokenScanForm(forms.Form):
     token = forms.CharField(max_length=500, label="Prescription token or QR link")
 
     def clean_token(self):
-        value = self.cleaned_data["token"].strip().rstrip("/")
+        value = "".join(self.cleaned_data["token"].split()).rstrip("/")
         if "/dispense/verify/" in value:
             value = value.rsplit("/", 1)[-1]
         if len(value) < 32:
@@ -47,6 +49,7 @@ class TokenScanForm(forms.Form):
 
 
 class DispenseForm(forms.Form):
+    confirmation_key = forms.UUIDField(widget=forms.HiddenInput)
     def __init__(self, *args, items, **kwargs):
         super().__init__(*args, **kwargs)
         self.items = list(items)

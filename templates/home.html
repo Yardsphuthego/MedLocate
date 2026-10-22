@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}MedLocate — Find medicine with fewer journeys{% endblock %}
+{% block title %}MedLocate — Connected medicine workflows{% endblock %}
 {% block content %}
 <section class="photo-hero" aria-label="MedLocate pharmacy service">
   <div class="photo-carousel" data-carousel aria-roledescription="carousel">
@@ -18,17 +18,17 @@
 </section>
 <nav class="platform-strip" id="platform-scope" aria-label="MedLocate platform services">
   <div class="wide-shell platform-strip-inner">
-    {% if user.is_authenticated %}<a href="{% url 'dashboard' %}">{% else %}<a href="{% url 'register' %}">{% endif %}
+    {% if user.is_authenticated %}<a href="{% url 'dashboard' %}">{% else %}<a href="{% url 'login' %}">{% endif %}
       <small>Platform</small><strong>Overview</strong><span aria-hidden="true">›</span>
     </a>
     <a href="{% url 'medicine_search' %}">
-      <small>Patients</small><strong>Find Medicine</strong><span aria-hidden="true">›</span>
+      <small>Doctors &amp; nurses</small><strong>Find Medicine</strong><span aria-hidden="true">›</span>
     </a>
     <a href="{% url 'doctor_prescription_list' %}">
       <small>Doctors</small><strong>Prescriptions</strong><span aria-hidden="true">›</span>
     </a>
     <a href="{% url 'dispense_scan' %}">
-      <small>Dispensers</small><strong>Verify &amp; Dispense</strong><span aria-hidden="true">›</span>
+      <small>Nurses &amp; pharmacy</small><strong>Verify &amp; Dispense</strong><span aria-hidden="true">›</span>
     </a>
     <a href="{% url 'inventory_list' %}">
       <small>Facilities</small><strong>Inventory</strong><span aria-hidden="true">›</span>

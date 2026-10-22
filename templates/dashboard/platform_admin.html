@@ -1,31 +1,59 @@
-{% extends 'base.html' %}
-{% block title %}Platform administration — MedLocate{% endblock %}
+{% extends 'dashboard/unfold_base.html' %}
+{% block title %}Operations | MedLocate{% endblock %}
 {% block content %}
-<section class="workspace-banner admin-workspace-banner">
-  <div class="wide-shell workspace-banner-inner">
-    <div><span class="workspace-eyebrow">Super administrator</span><h1>{{ workspace_name }}</h1><p>{{ dashboard_intro }}</p></div>
-    <a class="workspace-admin-link" href="{% url 'admin:index' %}">Open Django administration <span>→</span></a>
-  </div>
-</section>
-<section class="dashboard-metrics wide-shell" aria-label="Platform summary">
-  {% for metric in metrics %}<article><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong><small>{{ metric.note }}</small></article>{% endfor %}
-</section>
-<section class="admin-dashboard-body wide-shell">
-  <div class="admin-dashboard-main">
-    <section class="dashboard-panel">
-      <header><div><span class="kicker">Network operations</span><h2>Facility overview</h2></div><a href="{% url 'admin:facilities_facility_changelist' %}">Manage facilities</a></header>
-      <div class="table-wrap"><table class="dashboard-table"><thead><tr><th>Facility</th><th>Status</th><th>Staff</th><th>Stock records</th><th>Total units</th></tr></thead><tbody>{% for facility in facility_rows %}<tr><td><strong>{{ facility.name }}</strong><small>{{ facility.get_facility_type_display }} · {{ facility.address }}</small></td><td><span class="status-chip {{ facility.status }}">{{ facility.get_status_display }}</span></td><td>{{ facility.staff_count }}</td><td>{{ facility.stock_records }}</td><td>{{ facility.total_units|default:0 }}</td></tr>{% empty %}<tr><td colspan="5">No facilities have been added.</td></tr>{% endfor %}</tbody></table></div>
+<div class="med-workspace-content med-platform-overview">
+  <header class="med-ops-header">
+    <div class="med-ops-heading"><h1>Operations</h1></div>
+    <div class="med-ops-toolbar">
+      <span>Updated <time datetime="{{ updated_at|date:'c' }}">{{ updated_at|date:'d M Y, H:i' }}</time></span>
+      <a class="med-ops-refresh" href="{{ request.get_full_path }}">Refresh</a>
+      {% if user.is_superuser %}<a class="med-operations-action" href="{{ quick_actions.0.url }}">Add professional</a>{% endif %}
+    </div>
+  </header>
+
+  <section class="med-operations-stats" aria-label="Current totals">
+    {% for metric in metrics %}<div><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong></div>{% endfor %}
+  </section>
+
+  <section class="med-ops-exceptions" aria-labelledby="stock-exceptions-title">
+    <div class="med-ops-exceptions-heading"><h2 id="stock-exceptions-title">Stock exceptions</h2></div>
+    <div class="med-ops-exception-links">{% for alert in health_alerts %}<a href="{{ alert.url }}" {% if selected_health == alert.key %}aria-current="true"{% endif %}><span>{{ alert.label }}</span><strong>{{ alert.count }}</strong></a>{% endfor %}</div>
+  </section>
+
+  <section class="med-operations-section" aria-labelledby="facility-operations-title">
+    <div class="med-section-title"><div><h2 id="facility-operations-title">Facilities</h2></div><span>{{ facility_page.paginator.count }} records</span></div>
+    <form method="get" class="med-filters med-facility-filters" role="search" aria-label="Filter facilities">
+      {% if selected_health %}<input type="hidden" name="health" value="{{ selected_health }}">{% endif %}
+      <label>Search facilities<input type="search" name="q" value="{{ facility_query }}" placeholder="Name or address" maxlength="160"></label>
+      <label>Status<select name="status"><option value="">All statuses</option>{% for value, label in facility_statuses %}<option value="{{ value }}" {% if facility_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <button type="submit">Apply</button>
+      {% if facility_query or facility_status %}<a href="{% url 'dashboard' %}">Clear filters</a>{% endif %}
+    </form>
+    <div class="med-operations-table-wrap"><table class="med-table med-operations-table"><thead><tr><th>Facility</th><th>Status</th><th>Active staff</th><th>Stock records</th><th>Total units</th></tr></thead><tbody>
+      {% for facility in facility_rows %}<tr><td data-label="Facility"><strong>{% if can_manage_facilities %}<a href="{% url 'admin:facilities_facility_change' facility.pk %}">{{ facility.name }}</a>{% else %}{{ facility.name }}{% endif %}</strong><small>{{ facility.get_facility_type_display }} · {{ facility.address }}</small></td><td data-label="Status"><span class="med-status med-status-{{ facility.status }}">{{ facility.get_status_display }}</span></td><td data-label="Active staff">{{ facility.staff_count }}</td><td data-label="Stock records">{{ facility.stock_records }}</td><td data-label="Total units">{{ facility.total_units|default:0 }}</td></tr>
+      {% empty %}<tr><td colspan="5" class="med-operations-empty">{% if facility_query or facility_status %}No facilities match these filters.{% else %}No facilities have been added.{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% include 'dashboard/pagination.html' with page=facility_page params=facility_params page_key='page' anchor='' %}
+  </section>
+
+  {% if selected_health %}<section id="inventory-review" class="med-operations-section med-ops-review" aria-label="{{ health_heading }}">
+    <div class="med-section-title"><div><h2>{{ health_heading }}</h2></div><a href="{% url 'dashboard' %}">Close review</a></div>
+    <div class="med-operations-table-wrap"><table class="med-table med-operations-table med-health-table"><thead><tr><th>Medicine / facility</th><th>Units</th><th>Threshold</th><th>Expiry</th><th>Last updated</th></tr></thead><tbody>
+      {% for item in health_page %}<tr><td data-label="Medicine / facility"><strong>{% if can_manage_inventory %}<a href="{% url 'admin:inventory_inventoryitem_change' item.pk %}">{{ item.medicine }}</a>{% else %}{{ item.medicine }}{% endif %}</strong><small>{{ item.facility.name }}</small></td><td data-label="Units">{{ item.quantity }}</td><td data-label="Threshold">{{ item.low_stock_threshold }}</td><td data-label="Expiry">{{ item.expiry_date|date:'d M Y'|default:'Not recorded' }}</td><td data-label="Last updated">{{ item.updated_at|date:'d M Y, H:i' }}</td></tr>
+      {% empty %}<tr><td colspan="5" class="med-operations-empty">No stock records need attention in this category.</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% include 'dashboard/pagination.html' with page=health_page params=health_params page_key='health_page' anchor='#inventory-review' %}
+  </section>{% endif %}
+
+  <div class="med-operations-lower">
+    <section class="med-operations-section" aria-labelledby="account-access-title">
+      <div class="med-section-title"><div><h2 id="account-access-title">Recent accounts</h2></div>{% if can_manage_users %}<a href="{% url 'admin:accounts_user_changelist' %}">All accounts</a>{% endif %}</div>
+      <div class="med-ops-account-list">{% for account in recent_users %}<div><span><strong>{% if can_manage_users %}<a href="{% url 'admin:accounts_user_change' account.pk %}">{{ account.get_full_name|default:account.username }}</a>{% else %}{{ account.get_full_name|default:account.username }}{% endif %}</strong><small>{{ account.username }}</small></span><span>{{ account.get_primary_role_display }}</span><time datetime="{{ account.date_joined|date:'c' }}">{{ account.date_joined|date:'d M Y' }}</time></div>{% empty %}<p>No professional accounts yet.</p>{% endfor %}</div>
     </section>
-    <section class="dashboard-panel">
-      <header><div><span class="kicker">Traceability</span><h2>Recent audit events</h2></div><a href="{% url 'admin:audit_auditevent_changelist' %}">View audit evidence</a></header>
-      <div class="admin-audit-list">{% for event in recent_audit %}<div><span class="activity-marker" aria-hidden="true"></span><div><strong>{{ event.action }}</strong><small>{{ event.object_type }} {{ event.object_id }}{% if event.facility %} · {{ event.facility.name }}{% endif %}</small></div><span>{{ event.actor|default:'System' }}</span><time>{{ event.timestamp|date:'d M, H:i' }}</time></div>{% empty %}<div class="dashboard-empty"><strong>No audit activity yet</strong><span>Protected workflow events will appear here.</span></div>{% endfor %}</div>
+    <section class="med-operations-section" aria-labelledby="audit-activity-title">
+      <div class="med-section-title"><div><h2 id="audit-activity-title">Recent activity</h2></div>{% if can_view_audit %}<a href="{% url 'admin:audit_auditevent_changelist' %}">Audit log</a>{% endif %}</div>
+      <div class="med-operations-activity">{% for event in recent_audit %}<div><strong>{{ event.action_label }}</strong><span>{% if event.actor %}{{ event.actor.get_full_name|default:event.actor.username }}{% else %}System{% endif %}{% if event.facility %} · {{ event.facility.name }}{% endif %}</span><time datetime="{{ event.timestamp|date:'c' }}">{{ event.timestamp|date:'d M, H:i' }}</time></div>{% empty %}<p>No recorded activity yet.</p>{% endfor %}</div>
     </section>
   </div>
-  <aside class="admin-dashboard-sidebar">
-    <section class="platform-health-panel"><span class="kicker">Attention required</span><h2>Inventory health</h2><div class="health-stat"><strong>{{ inventory_health.low }}</strong><span>Low-stock records</span></div><div class="health-stat"><strong>{{ inventory_health.stale }}</strong><span>Stale updates</span></div><div class="health-stat"><strong>{{ inventory_health.expired }}</strong><span>Expired batches</span></div><div class="health-stat"><strong>{{ inventory_health.zero }}</strong><span>Zero-stock records</span></div></section>
-    <section class="dashboard-actions admin-actions"><span class="kicker">Administration</span><h2>Platform controls</h2><nav>{% for action in quick_actions %}<a href="{{ action.url }}"><span><strong>{{ action.label }}</strong><small>{{ action.detail }}</small></span><b aria-hidden="true">→</b></a>{% endfor %}</nav></section>
-    <section class="role-distribution"><span class="kicker">Access</span><h2>Users by role</h2>{% for role in role_counts %}<div><span>{{ role.label }}</span><strong>{{ role.count }}</strong></div>{% endfor %}</section>
-    <section class="recent-users"><span class="kicker">Latest accounts</span><h2>Recently registered</h2>{% for account in recent_users %}<div><span>{{ account.get_full_name|default:account.username }}</span><small>{% if account.is_superuser %}Platform administrator{% else %}{{ account.get_primary_role_display }}{% endif %}</small></div>{% empty %}<p>No accounts yet.</p>{% endfor %}</section>
-  </aside>
-</section>
+</div>
 {% endblock %}

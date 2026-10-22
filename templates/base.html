@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'medlocate/css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'medlocate/css/app.css' %}?v=workspace-layout-2">
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -28,70 +28,58 @@
       </a>
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav"><span>Menu</span></button>
       <nav id="main-nav" class="main-nav clinic-primary-nav" aria-label="Primary navigation">
-        {% if not user.is_authenticated or user.primary_role == 'patient' %}<a href="{% url 'medicine_search' %}">Find Medicine</a>{% else %}<a href="{% url 'dashboard' %}">My Workspace</a>{% endif %}
-        <details class="nav-dropdown"><summary>Patients &amp; Visitors</summary><div class="nav-dropdown-panel"><span>Patient services</span><a href="{% url 'medicine_search' %}"><strong>Search medicine stock</strong><small>Compare participating facilities</small></a>{% if user.is_authenticated %}<a href="{% url 'patient_prescription_list' %}">{% else %}<a href="{% url 'login' %}" data-login-open>{% endif %}<strong>My prescriptions</strong><small>Open secure QR prescriptions</small></a>{% if not user.is_authenticated %}<a href="{% url 'register' %}" data-register-open><strong>Create patient account</strong><small>Save information for later</small></a>{% endif %}</div></details>
-        <details class="nav-dropdown"><summary>Health Professionals</summary><div class="nav-dropdown-panel"><span>Role-secured workspaces</span>{% if user.primary_role == 'doctor' %}<a href="{% url 'doctor_prescription_list' %}"><strong>Doctor prescriptions</strong><small>Create and review prescriptions</small></a>{% elif user.primary_role == 'dispenser' %}<a href="{% url 'dispense_scan' %}"><strong>Verify and dispense</strong><small>Scan an opaque prescription QR</small></a>{% elif user.primary_role == 'inventory' or user.primary_role == 'facility_admin' %}<a href="{% url 'inventory_list' %}"><strong>Facility inventory</strong><small>Maintain and import stock</small></a>{% else %}<a href="{% url 'login' %}" data-login-open><strong>Staff sign in</strong><small>Access your authorized workspace</small></a>{% endif %}{% if user.is_staff %}<a href="{% url 'admin:index' %}"><strong>Platform administration</strong><small>Master data and audit controls</small></a>{% endif %}</div></details>
+        {% if user.is_authenticated %}<a href="{% url 'dashboard' %}">My Workspace</a>{% else %}<a href="{% url 'medicine_search' %}">Find Medicine</a>{% endif %}
+        <details class="nav-dropdown"><summary>Clinical Services</summary><div class="nav-dropdown-panel"><span>Medicine &amp; prescriptions</span>
+          {% if not user.is_authenticated or user.primary_role == 'doctor' or user.primary_role == 'nurse' %}<a href="{% url 'medicine_search' %}"><strong>Search medicine stock</strong><small>Compare participating facilities</small></a>{% endif %}
+          {% if not user.is_authenticated or user.primary_role == 'doctor' %}<a href="{% url 'doctor_prescription_list' %}"><strong>Doctor prescriptions</strong><small>Create and review secure prescriptions</small></a>{% endif %}
+          {% if not user.is_authenticated or user.primary_role == 'nurse' or user.primary_role == 'pharmacy' or user.primary_role == 'dispenser' %}<a href="{% url 'dispense_scan' %}"><strong>Verify and dispense</strong><small>Verify a QR reference and record dispensing</small></a>{% endif %}
+          {% if user.primary_role == 'doctor' or user.primary_role == 'nurse' or user.primary_role == 'pharmacy' %}<a href="{% url 'medicine_identify' %}"><strong>Identify medicine</strong><small>Scan and confirm a medicine barcode</small></a>{% endif %}
+        </div></details>
+        <details class="nav-dropdown"><summary>Health Professionals</summary><div class="nav-dropdown-panel"><span>Role-secured workspaces</span>
+          {% if not user.is_authenticated %}<a href="{% url 'login' %}" data-login-open><strong>Staff sign in</strong><small>Access your authorized workspace</small></a>{% endif %}
+          {% if not user.is_authenticated or user.primary_role == 'pharmacy' or user.primary_role == 'inventory' or user.primary_role == 'facility_admin' %}<a href="{% url 'inventory_list' %}"><strong>Facility inventory</strong><small>Maintain and import medicine stock</small></a>{% endif %}
+          {% if user.is_authenticated and user.primary_role != 'patient' %}<a href="{% url 'staff_reports' %}"><strong>History and reports</strong><small>Review activity within your role</small></a>{% endif %}
+          {% if user.is_staff %}<a href="{% url 'admin:index' %}"><strong>Platform administration</strong><small>Master data and audit controls</small></a>{% endif %}
+        </div></details>
         <a href="{% url 'home' %}#platform-scope">About MedLocate</a>
       </nav>
       <div class="clinic-actions">
-        <a class="nav-search" href="{% url 'medicine_search' %}" aria-label="Search for medicine"><span aria-hidden="true">⌕</span></a>
-        {% if user.is_authenticated %}<span class="clinic-account"><strong>{{ user.first_name|default:user.username }}</strong><small>{% if user.is_superuser %}Platform administrator{% else %}{{ user.get_primary_role_display }}{% endif %}</small></span><a class="clinic-cta" href="{% url 'dashboard' %}">My MedLocate</a>{% else %}<button class="clinic-signin" type="button" data-login-open aria-expanded="false" aria-controls="login-dropdown">Sign in <span aria-hidden="true">⌄</span></button><a class="clinic-cta" href="{% url 'register' %}" data-register-open>Create account</a>{% endif %}
+        {% if user.primary_role == 'doctor' or user.primary_role == 'nurse' %}<a class="nav-search" href="{% url 'medicine_search' %}" aria-label="Search for medicine"><span aria-hidden="true">⌕</span></a>{% elif user.primary_role == 'pharmacy' %}<a class="nav-search" href="{% url 'medicine_identify' %}" aria-label="Identify medicine"><span aria-hidden="true">⌕</span></a>{% endif %}
+        {% if user.is_authenticated %}<span class="clinic-account"><strong>{{ user.first_name|default:user.username }}</strong><small>{% if user.is_superuser %}Platform administrator{% else %}{{ user.get_primary_role_display }}{% endif %}</small></span><a class="clinic-cta" href="{% url 'dashboard' %}">My MedLocate</a>{% else %}<button class="clinic-signin clinic-cta signin-trigger" type="button" data-login-open aria-haspopup="dialog" aria-expanded="false" aria-controls="login-dropdown">Sign in</button>{% endif %}
       </div>
       {% if not user.is_authenticated %}
-      <section class="login-dropdown" id="login-dropdown" data-login-panel hidden aria-labelledby="login-dropdown-title">
-        <div class="login-compact-card">
-          <div class="login-compact-logo"><img src="{% static 'medlocate/img/medlocate-logo.png' %}" alt="MedLocate — Medicine within reach"></div>
-          <h2 id="login-dropdown-title">Welcome back</h2>
-          <p>First time here? <a href="{% url 'register' %}" data-register-open>Create an account</a></p>
-          <form method="post" action="{% url 'login' %}">
-            {% csrf_token %}
-            <div class="field"><label class="sr-only" for="dropdown-username">Username</label><input id="dropdown-username" name="username" type="text" autocomplete="username" placeholder="Username" required></div>
-            <div class="field"><label class="sr-only" for="dropdown-password">Password</label><input id="dropdown-password" name="password" type="password" autocomplete="current-password" placeholder="Password" required></div>
-            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button class="button button-primary button-full" type="submit">Sign in</button>
-          </form>
-          <div class="login-compact-divider"><span>or</span></div>
-          <a class="login-compact-guest" href="{% url 'medicine_search' %}">Continue searching as a guest</a>
-          <small>Account access is secured and limited by your assigned role.</small>
+      <dialog class="signin-panel" id="login-dropdown" data-login-panel aria-labelledby="login-dropdown-title">
+        <div class="signin-body">
+            <header class="signin-heading"><span class="signin-identity"><img src="{% static 'medlocate/img/favicon.svg' %}" alt=""><strong>MedLocate</strong></span><button class="signin-close" type="button" data-login-close aria-label="Close sign in">×</button></header>
+            <h2 id="login-dropdown-title">Sign in to your workspace</h2>
+            <p class="signin-intro">Enter your staff account details.</p>
+            <div id="login-feedback" role="alert">{% for message in messages %}{% if message.tags == 'error' %}<p class="staff-login-error">{{ message }}</p>{% endif %}{% endfor %}</div>
+            <form method="post" action="{% url 'login' %}" aria-describedby="login-feedback">
+              {% csrf_token %}
+              <div class="field"><label for="dropdown-username">Username</label><input id="dropdown-username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus></div>
+              <div class="field"><label for="dropdown-password">Password</label><div class="signin-password"><input id="dropdown-password" name="password" type="password" autocomplete="current-password" required><button type="button" data-password-toggle aria-controls="dropdown-password" aria-label="Show password" aria-pressed="false">Show</button></div></div>
+              <input type="hidden" name="next" value="{{ request.GET.next|default:"/dashboard/" }}">
+              <button class="button button-primary button-full" type="submit">Sign in</button>
+            </form>
+            <p class="signin-support">Need an account? Contact your facility administrator.</p>
         </div>
-      </section>
+      </dialog>
       {% endif %}
     </div>
-    {% if user.is_authenticated %}<div class="signed-in-bar"><div class="wide-shell"><span>Signed in as <strong>{{ user.get_full_name|default:user.username }}</strong></span><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Sign out</button></form></div></div>{% endif %}
+    {% if user.is_authenticated %}<div class="signed-in-bar"><div class="wide-shell"><span>Signed in as <strong>{{ user.get_full_name|default:user.username }}</strong></span>{% if staff_facilities|length > 1 %}<form method="post" action="{% url 'select_facility' %}" class="facility-switch">{% csrf_token %}<label for="staff-facility">Working facility</label><select name="facility" id="staff-facility">{% for membership in staff_facilities %}<option value="{{ membership.facility_id }}" {% if membership.facility_id == active_facility_id %}selected{% endif %}>{{ membership.facility.name }}</option>{% endfor %}</select><button>Switch</button></form>{% endif %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Sign out</button></form></div></div>{% endif %}
   </header>
-  {% if messages %}<div class="messages" role="status">{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+  {% if messages %}<div class="messages" role="status">{% for message in messages %}{% if message.tags != 'error' or user.is_authenticated %}<div class="message {{ message.tags }}">{{ message }}</div>{% endif %}{% endfor %}</div>{% endif %}
   <main id="main">{% block content %}{% endblock %}</main>
-  <footer class="clinic-footer">
+  {% block footer %}<footer class="clinic-footer">
     <section class="footer-main"><div class="wide-shell footer-grid">
-      <div class="footer-intro"><a class="footer-brand" href="{% url 'home' %}"><img class="footer-logo" src="{% static 'medlocate/img/medlocate-logo.png' %}" alt="MedLocate — Medicine within reach"></a><p>Helping patients make informed journeys while giving authorized health teams secure stock and prescription workflows.</p><a class="footer-emergency" href="tel:997"><small>Medical emergency</small><strong>Call 997</strong></a></div>
-      <nav aria-label="Patient footer links"><h2>Patients &amp; Visitors</h2>{% if not user.is_authenticated or user.primary_role == 'patient' %}<a href="{% url 'medicine_search' %}">Find medicine</a>{% if user.is_authenticated %}<a href="{% url 'patient_prescription_list' %}">{% else %}<a href="{% url 'login' %}" data-login-open>{% endif %}My prescriptions</a>{% endif %}{% if not user.is_authenticated %}<a href="{% url 'register' %}" data-register-open>Create an account</a>{% endif %}<a href="{% url 'home' %}#stock-disclaimer">Understanding stock results</a></nav>
-      <nav aria-label="Professional footer links"><h2>Health Professionals</h2>{% if user.primary_role == 'doctor' %}<a href="{% url 'doctor_prescription_create' %}">Create prescription</a><a href="{% url 'doctor_prescription_list' %}">Issued prescriptions</a>{% elif user.primary_role == 'dispenser' %}<a href="{% url 'dispense_scan' %}">Verify prescription</a>{% elif user.primary_role == 'inventory' or user.primary_role == 'facility_admin' %}<a href="{% url 'inventory_list' %}">Facility inventory</a><a href="{% url 'inventory_upload' %}">Excel imports</a>{% else %}<a href="{% url 'login' %}" data-login-open>Staff sign in</a>{% endif %}</nav>
+      <div class="footer-intro"><a class="footer-brand" href="{% url 'home' %}"><img class="footer-logo" src="{% static 'medlocate/img/medlocate-logo.png' %}" alt="MedLocate — Medicine within reach"></a><p>Connecting doctors, nurses and pharmacy teams with medicine availability, secure prescriptions and reliable stock records.</p><a class="footer-emergency" href="tel:997"><small>Medical emergency</small><strong>Call 997</strong></a></div>
+      <nav aria-label="Staff footer links"><h2>Health professionals</h2><a href="{% url 'dashboard' %}">Staff workspace</a><a href="{% url 'medicine_search' %}">Medicine availability</a><a href="{% url 'medicine_identify' %}">Identify medicine</a></nav>
+      <nav aria-label="Workflows"><h2>Connected care</h2><a href="{% url 'doctor_prescription_list' %}">Prescriptions</a><a href="{% url 'dispense_scan' %}">Verify &amp; dispense</a><a href="{% url 'staff_reports' %}">History &amp; reports</a></nav>
       <nav aria-label="About footer links"><h2>About MedLocate</h2><a href="{% url 'home' %}#platform-scope">Project scope</a><a href="{% url 'home' %}#stock-disclaimer">Stock disclaimer</a>{% if user.is_staff %}<a href="{% url 'admin:index' %}">Administration</a>{% endif %}</nav>
     </div></section>
     <section class="footer-legal" id="stock-disclaimer"><div class="wide-shell footer-site-information"><img class="footer-bw60-logo" src="{% static 'medlocate/img/bw60-logo.png' %}" alt="Botswana 60 anniversary"><strong>Site information</strong><nav><a href="{% url 'home' %}#platform-scope">Project scope</a><a href="{% url 'home' %}#stock-disclaimer">Stock guidance</a></nav><p>Gaborone, Botswana · © {% now 'Y' %} MedLocate. Stock is advisory and not a reservation.</p></div></section>
-  </footer>
-  {% if not user.is_authenticated %}
-  <dialog class="register-modal" data-register-modal aria-labelledby="register-modal-title">
-    <div class="register-modal-card">
-      <button class="register-modal-close" type="button" data-register-close aria-label="Close account creation">×</button>
-      <div class="register-modal-logo"><img src="{% static 'medlocate/img/medlocate-logo.png' %}" alt="MedLocate — Medicine within reach"></div>
-      <h2 id="register-modal-title">Create your account</h2>
-      <p>Save useful information and keep your MedLocate activity together.</p>
-      {% if messages %}<div class="register-modal-errors" role="alert">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>{% endif %}
-      <form method="post" action="{% url 'register' %}">
-        {% csrf_token %}
-        <div class="register-name-row"><div class="field"><label for="register-first-name">First name</label><input id="register-first-name" name="first_name" autocomplete="given-name" required></div><div class="field"><label for="register-last-name">Last name</label><input id="register-last-name" name="last_name" autocomplete="family-name" required></div></div>
-        <div class="register-name-row"><div class="field"><label for="register-username">Username</label><input id="register-username" name="username" autocomplete="username" required></div><div class="field"><label for="register-email">Email address</label><input id="register-email" name="email" type="email" autocomplete="email" required></div></div>
-        <div class="field"><label for="register-phone">Phone number</label><input id="register-phone" name="phone" type="tel" autocomplete="tel" placeholder="+267 71 234 567" required></div>
-        <div class="register-name-row"><div class="field"><label for="register-password1">Password</label><input id="register-password1" name="password1" type="password" autocomplete="new-password" required></div><div class="field"><label for="register-password2">Confirm password</label><input id="register-password2" name="password2" type="password" autocomplete="new-password" required></div></div>
-        <label class="register-consent"><input name="consent_acknowledged" type="checkbox" required><span>I agree to MedLocate's privacy and account terms.</span></label>
-        <button class="button button-primary button-full" type="submit">Create account</button>
-      </form>
-      <p class="register-modal-signin">Already have an account? <button type="button" data-register-to-login>Sign in</button></p>
-    </div>
-  </dialog>
-  {% endif %}
-  <script src="{% static 'medlocate/js/app.js' %}" defer></script>
+  </footer>{% endblock %}
+  <script src="{% static 'medlocate/js/app.js' %}?v=staff-signin-4" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

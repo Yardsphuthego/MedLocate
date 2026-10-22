@@ -46,15 +46,6 @@ class Command(BaseCommand):
                     defaults={"quantity": 18 + facility_index * 12 + medicine_index * 7, "low_stock_threshold": 10},
                 )
 
-        patient, created = User.objects.get_or_create(username="demo.patient", defaults={
-            "email": "patient@example.test", "first_name": "Demo", "last_name": "Patient", "primary_role": User.Role.PATIENT,
-        })
-        patient.email = "patient@example.test"
-        patient.primary_role = User.Role.PATIENT
-        patient.set_password("DemoPatient2026!")
-        patient.save()
-        PatientProfile.objects.get_or_create(user=patient, defaults={"phone": "+267 71000001", "consent_acknowledged": True})
-
         inventory_user, _ = User.objects.get_or_create(username="demo.inventory", defaults={
             "email": "inventory@example.test", "first_name": "Demo", "last_name": "Officer", "primary_role": User.Role.INVENTORY,
         })
@@ -88,8 +79,19 @@ class Command(BaseCommand):
             user=dispenser, facility=facility_objects[0], role=User.Role.DISPENSER,
             defaults={"active": True},
         )
+        FacilityMembership.objects.get_or_create(user=doctor, facility=facility_objects[0], role=User.Role.DOCTOR)
+        for role, label in ((User.Role.NURSE, "Nurse"), (User.Role.PHARMACY, "Pharmacy")):
+            account, created = User.objects.get_or_create(username=f"demo.{role}", defaults={
+                "email": f"{role}@example.test", "first_name": "Demo", "last_name": label, "primary_role": role,
+            })
+            if created:
+                account.set_password(f"Demo{label}2026!")
+                account.save()
+            StaffProfile.objects.get_or_create(user=account)
+            FacilityMembership.objects.get_or_create(user=account, facility=facility_objects[0], role=role)
+            self.stdout.write(f"{label}: demo.{role} / Demo{label}2026!")
         self.stdout.write(self.style.SUCCESS("Synthetic demo data ready."))
-        self.stdout.write("Patient: demo.patient / DemoPatient2026!")
+
         self.stdout.write("Inventory: demo.inventory / DemoInventory2026!")
         self.stdout.write("Doctor: demo.doctor / DemoDoctor2026!")
         self.stdout.write("Dispenser: demo.dispenser / DemoDispenser2026!")

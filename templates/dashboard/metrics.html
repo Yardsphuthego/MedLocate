@@ -1,0 +1,10 @@
+{% load unfold %}
+<section class="med-kpis" aria-label="{{ summary_label|default:'Workspace summary' }}">
+  {% for metric in metrics %}
+    {% component 'unfold/components/card.html' with class='med-kpi' %}
+      <span class="med-kpi-label">{{ metric.label }}</span>
+      <strong class="med-kpi-value">{{ metric.value }}</strong>
+      <small class="med-kpi-note">{{ metric.note }}</small>
+    {% endcomponent %}
+  {% endfor %}
+</section>

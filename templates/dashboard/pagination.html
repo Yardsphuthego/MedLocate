@@ -1,0 +1,4 @@
+<nav class="dashboard-pagination" aria-label="{% if page_key == 'page' %}Facility{% else %}Inventory{% endif %} pages">
+  <span>{{ page.paginator.count }} record{{ page.paginator.count|pluralize }} · Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  <div>{% if page.has_previous %}<a href="?{{ params }}&amp;{{ page_key }}={{ page.previous_page_number }}{{ anchor }}">← Previous</a>{% endif %}{% if page.has_next %}<a href="?{{ params }}&amp;{{ page_key }}={{ page.next_page_number }}{{ anchor }}">Next →</a>{% endif %}</div>
+</nav>

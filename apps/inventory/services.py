@@ -3,6 +3,7 @@ from hashlib import sha256
 from io import BytesIO
 from django.db import transaction
 from django.utils import timezone
+from zipfile import BadZipFile
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from .models import InventoryAdjustment, InventoryItem, InventoryUpload, InventoryUploadRow
@@ -10,7 +11,7 @@ from apps.audit.services import record_event
 from apps.medicines.models import Medicine
 
 REQUIRED_HEADERS = ("medicine_code", "medicine_name", "strength", "form", "quantity", "expiry_date")
-OPTIONAL_HEADERS = ("last_updated",)
+OPTIONAL_HEADERS = ("last_updated", "batch_number")
 
 
 def _text(value):
@@ -43,7 +44,7 @@ def validate_inventory_workbook(*, uploaded_file, facility, actor):
         sheet = workbook.active
         rows = sheet.iter_rows()
         header_cells = next(rows)
-    except (InvalidFileException, KeyError, ValueError, StopIteration, OSError) as exc:
+    except (BadZipFile, InvalidFileException, KeyError, ValueError, StopIteration, OSError) as exc:
         upload.status = InventoryUpload.Status.REJECTED
         upload.error_text = f"The workbook could not be read: {exc}"
         upload.save(update_fields=("status", "error_text"))
@@ -97,6 +98,12 @@ def validate_inventory_workbook(*, uploaded_file, facility, actor):
             errors.append("Expiry date must be a valid date.")
         if expiry and expiry < timezone.localdate() and quantity and quantity > 0:
             errors.append("Expired medicine cannot be imported as available stock.")
+        last_updated = values.get("last_updated")
+        if last_updated not in (None, "") and not isinstance(last_updated, (date, datetime)):
+            try:
+                datetime.fromisoformat(str(last_updated).strip().replace("Z", "+00:00"))
+            except ValueError:
+                errors.append("Last updated must be a valid date or timestamp.")
         medicine = Medicine.objects.filter(code=code, active=True).first()
         if not medicine:
             errors.append("Medicine code does not match an active medicine.")
@@ -104,12 +111,15 @@ def validate_inventory_workbook(*, uploaded_file, facility, actor):
             name.casefold(), strength.casefold(), medicine_form.casefold()
         ):
             errors.append("Medicine name, strength or form does not match the master record.")
-        key = (code.casefold(), expiry.isoformat() if expiry else "")
+        batch = _text(values.get("batch_number"))
+        if len(batch) > 80:
+            errors.append("Batch number must be 80 characters or fewer.")
+        key = (code.casefold(), batch, expiry.isoformat() if expiry else "")
         if key in seen:
             errors.append("Duplicate medicine and expiry date in this workbook.")
         seen.add(key)
         normalized = {
-            "medicine_id": medicine.pk if medicine else None, "medicine_code": code, "medicine_name": name,
+            "batch_number": batch, "medicine_id": medicine.pk if medicine else None, "medicine_code": code, "medicine_name": name,
             "strength": strength, "form": medicine_form, "quantity": quantity,
             "expiry_date": expiry.isoformat() if expiry else None,
         }
@@ -144,11 +154,11 @@ def commit_inventory_upload(*, upload, actor):
     for row in upload.parsed_rows:
         expiry = date.fromisoformat(row["expiry_date"]) if row["expiry_date"] else None
         item = InventoryItem.objects.select_for_update().filter(
-            facility=upload.facility, medicine_id=row["medicine_id"], expiry_date=expiry
+            facility=upload.facility, medicine_id=row["medicine_id"], batch_number=row.get("batch_number", ""), expiry_date=expiry
         ).first()
         previous = item.quantity if item else 0
         if item is None:
-            item = InventoryItem(facility=upload.facility, medicine_id=row["medicine_id"], expiry_date=expiry)
+            item = InventoryItem(facility=upload.facility, medicine_id=row["medicine_id"], batch_number=row.get("batch_number", ""), expiry_date=expiry)
         item.quantity = row["quantity"]
         item.updated_by = actor
         item.save()
