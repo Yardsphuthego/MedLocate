@@ -15,29 +15,30 @@ Public patient registration, guest stock search and patient prescription routes 
 
 Use synthetic demonstration data only. Recorded stock is advisory, not a reservation. The prototype does not provide treatment advice or billing.
 
-## Get the latest code
+## Get the latest code on Windows
 
-If this is your first time setting up MedLocate, clone the repository and enter the project directory:
+Open PowerShell in the folder where you keep your projects. If MedLocate is already on the PC, enter its folder and pull the latest code:
 
-```bash
-git clone https://github.com/Yardsphuthego/MedLocate.git
-cd MedLocate
-```
-
-If you already have the project, save or commit any local changes first, then update your checkout:
-
-```bash
-cd MedLocate
+```powershell
+cd .\MedLocate
 git pull --ff-only origin main
-source .venv/bin/activate
-pip install -r requirements/development.txt
-python manage.py migrate
-python manage.py runserver 127.0.0.1:8001
+.\.venv\Scripts\python.exe -m pip install -r requirements/development.txt
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8001
 ```
 
-The update commands use your existing PostgreSQL database and do not reset its data. If `.venv` does not exist yet, follow the quick start below to create it. Open <http://127.0.0.1:8001/> after starting the server.
+If this is a new Windows PC, clone the repository and create the virtual environment first:
 
-## Quick start
+```powershell
+git clone https://github.com/Yardsphuthego/MedLocate.git
+cd .\MedLocate
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements/development.txt
+```
+
+Configure PostgreSQL as described below, then run the `migrate` and `runserver` commands from the first block. If an existing checkout has no `.venv` folder, run `py -m venv .venv` before the update commands. Save or commit local changes before pulling. The update commands do not reset database data. Open <http://127.0.0.1:8001/> after starting the server.
+
+## Quick start on macOS/Linux
 
 Python 3.12+ and PostgreSQL are required for the normal workflow. With a local PostgreSQL server accepting your OS account:
 
